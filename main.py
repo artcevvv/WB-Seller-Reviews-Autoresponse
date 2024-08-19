@@ -31,7 +31,7 @@ inline_keyboard = InlineKeyboardMarkup().add(publish_inline_button)
 active_users = set()
 sent_reviews_ids = set()
 start_button = KeyboardButton("/start")
-kb_layout = ReplyKeyboardMarkup(resize_keyboard=True).add(start_button)
+kb_menu_layout = ReplyKeyboardMarkup(resize_keyboard=True).add(start_button)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +41,12 @@ logger = logging.getLogger(__name__)
 messages = [{"role": "system", "content": "feedback_rating"}]
 
 
+def create_rev_keyboard():
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    skip_button = InlineKeyboardButton("Пропустить", callback_data="skip")
+    reply_button = InlineKeyboardButton("Ответить", callback_data="reply")
+    keyboard.add(skip_button, reply_button)
+    return keyboard
 
 
 def fetch_reviews():
@@ -49,7 +55,7 @@ def fetch_reviews():
         "Content-Type": "application/json",
     }
 
-    params = {"isAnswered": "false", "take": 1, "skip": 0}
+    params = {"isAnswered": "true", "take": 10, "skip": 0}
     try:
         response = requests.get(
             WILDBERRIES_API_ENDPOINT, headers=headers, params=params
@@ -85,17 +91,12 @@ def fetch_reviews():
         return None
 
 
-# async def send_new_revs_periodically():
-# while True:
-# feedbacks = fetch_reviews()
-# for user_id in active_users:
-#     await bot.send_message(
-#         user_id,
-#         f"<b>New Review:</b>\n{feedbacks}",
-#         parse_mode=ParseMode.HTML,
-#     )
-
-# await asyncio.sleep(30)
+async def send_repeately():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    while True:
+        fetch_reviews()
+        await asyncio.sleep(5)
 
 
 @dp.message_handler(commands=["start"])
@@ -110,30 +111,19 @@ async def start_command(message: types.Message):
         feedback_rating,
     ) = fetch_reviews()
 
+    kb_layout = create_rev_keyboard()
+
     await message.reply(
         "Hello! I will send you new reviews from Wildberries automatically.",
-        reply_markup=kb_layout,
+        reply_markup=kb_menu_layout,
     )
 
     await bot.send_message(
         user_id,
-        f"<b>Новый отзыв:</b>\n\nМагазин: <b>{feedback_supplier}</b>\nТовар: {feedback_item}\nОценка: {feedback_rating} \nТекст отзыва: {feedback_review}\n",
+        f"<b>Новый отзыв:</b>\n\nМагазин: <b>{feedback_supplier}</b>\nТовар: {feedback_item}\nОценка: {feedback_rating} \nТекст отзыва: {feedback_review}\n Ответ от ИИ: {response_ai}",
         parse_mode=ParseMode.HTML,
+        reply_markup=kb_layout,
     )
-
-
-# @dp.message_handler(commands=["get_reviews"])
-# async def get_revs_command(message: types.Message):
-#     reviews = fetch_reviews()
-
-#     if WILDBERRIES_API_TOKEN == "":
-#         await message.reply("Command currently does not work")
-
-#     if not reviews:
-#         await message.reply("No reviews")
-
-#     for review in reviews:
-#         review_text = review.get()
 
 
 @dp.errors_handler()
@@ -143,7 +133,5 @@ async def handle_errors(update, exception):
 
 
 if __name__ == "__main__":
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(send_new_revs_periodically())
-    # send_new_revs_periodically()
+    # asyncio.get_event_loop().run_forever()
     executor.start_polling(dp, skip_updates=True)
