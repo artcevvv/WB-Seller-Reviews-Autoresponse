@@ -49,13 +49,17 @@ def create_rev_keyboard():
     return keyboard
 
 
-def fetch_reviews():
+async def fetch_reviews(user_id, kb_layout):
     headers = {
         "Authorization": WILDBERRIES_API_TOKEN,
         "Content-Type": "application/json",
     }
 
-    params = {"isAnswered": "true", "take": 10, "skip": 0}
+    params = {
+        "isAnswered": "true",
+        "take": 4,
+        "skip": 0,
+    }  # Изменить isAnswered на false
     try:
         response = requests.get(
             WILDBERRIES_API_ENDPOINT, headers=headers, params=params
@@ -63,26 +67,37 @@ def fetch_reviews():
 
         if response.status_code == 200:
             data = response.json()
+            # print(data)
             feedbacks = data.get("data", {}).get("feedbacks", [])
-            feedbacks_answered_status = feedbacks[0].get("answer")
-            # print(feedbacks[0])
 
-            if feedbacks_answered_status == None:
-                review_text = feedbacks[0].get("text", "No review_text available")
-                review_item = feedbacks[0].get("productDetails").get("productName")
-                review_supplier = feedbacks[0].get("productDetails").get("supplierName")
-                review_rating = feedbacks[0].get("productValuation")
-                review_username = feedbacks[0].get("userName")
-                return (
-                    review_text,
-                    review_item,
-                    review_username,
-                    review_supplier,
-                    review_rating,
-                )
-            else:
+            print(feedbacks)
+
+            if not feedbacks:
                 logger.info("No feedbacks available.")
-                return None
+                return
+
+            for feedback in feedbacks:
+                # Поверхностная хня
+                review_rating = feedback.get("productValuation", "Рейтинг не указан")
+                review_username = feedback.get("userName", "Имя не указано")
+                review_text = feedback.get("text", "Нет отзыва")
+                # Детали
+                product_details = feedback.get("productDetails", {})
+                review_item = product_details.get("productName", "Unknown item")
+                review_supplier = product_details.get(
+                    "supplierName", "Unknown supplier"
+                )
+
+                print(
+                    f"Текст отзыва: {review_text}, Товар: {review_item}, Поставщик: {review_supplier}, Рейтинг: {review_rating}, Имя:{review_username}"
+                )
+
+                await bot.send_message(
+                    user_id,
+                    f"<b>Новый отзыв:</b>\n\nМагазин: <b>{review_supplier}</b>\nИмя:{review_username}Товар: {review_item}\nОценка: {review_rating}\nТекст отзыва: {review_text}\n",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=kb_layout,
+                )
         else:
             logger.error(f"Failed to fetch reviews: {response.status_code}")
             return []
@@ -91,25 +106,10 @@ def fetch_reviews():
         return None
 
 
-async def send_repeately():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    while True:
-        fetch_reviews()
-        await asyncio.sleep(5)
-
-
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
     user_id = message.chat.id
     active_users.add(user_id)
-    (
-        feedback_review,
-        feedback_item,
-        feedback_username,
-        feedback_supplier,
-        feedback_rating,
-    ) = fetch_reviews()
 
     kb_layout = create_rev_keyboard()
 
@@ -118,12 +118,7 @@ async def start_command(message: types.Message):
         reply_markup=kb_menu_layout,
     )
 
-    await bot.send_message(
-        user_id,
-        f"<b>Новый отзыв:</b>\n\nМагазин: <b>{feedback_supplier}</b>\nТовар: {feedback_item}\nОценка: {feedback_rating} \nТекст отзыва: {feedback_review}\n Ответ от ИИ: {response_ai}",
-        parse_mode=ParseMode.HTML,
-        reply_markup=kb_layout,
-    )
+    await fetch_reviews(user_id, kb_layout)
 
 
 @dp.errors_handler()
