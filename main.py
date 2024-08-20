@@ -13,6 +13,7 @@ from aiogram.utils import executor
 import requests
 import openai
 import asyncio
+from openai import OpenAI
 
 
 load_dotenv()
@@ -21,9 +22,9 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WILDBERRIES_API_TOKEN = os.getenv("WILDBERRIES_API_TOKEN")
 WILDBERRIES_API_ENDPOINT = os.getenv("WILDBERRIES_API_ENDPOINT")
-GPT_API_TOKEN = os.getenv("GPT_API_TOKEN")
+OPENAI_API_KEY = os.getenv("GPT_API_TOKEN")
 
-openai.api_key = GPT_API_TOKEN
+openai.api_key = OPENAI_API_KEY
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher(bot)
 publish_inline_button = InlineKeyboardButton("Опубликовать", callback_data="button1")
@@ -49,6 +50,38 @@ def create_rev_keyboard():
     return keyboard
 
 
+async def get_chatgpt_response(
+    review_supplier, review_item, review_rating, review_text
+):
+    messages = [
+        {
+            "role": "system",
+            "content": "Ты продавец на wildberries, и тебе нужно отвечать на отзывы клиентов.",
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Представь, что ты продавец на wildberries. На твой товар оставили отзыв. Название магазина: {review_supplier}"
+                f"Товар называется {review_item}. Оценка отзыва {review_rating}. "
+                "Обязательно подтверди отзыв клиента и вырази благодарность за оставленный отзыв, независимо от того, положительный он или отрицательный. "
+                "Если пользователь указал о какой-то проблеме, то дай ему ответ на эту проблему и покажи серьёзную озабоченность данной проблемой. "
+                "В зависимости от тона отзыва поддержи отзыв клиента сочувствием или позитивом. "
+                "Покажи клиенту, что ты понимаешь его точку зрения и предложи альтернативные варианты для устранения любой проблемы, которые он мог упомянуть в отзыве. "
+                f"Отзыв клиента следующий: {review_text}"
+            ),
+        },
+    ]
+
+    try:
+        # Call the GPT API
+        response = OpenAI().chat.completions.create(model="gpt-4o", messages=messages)
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        logger.error(f"Error calling GPT API: {e}")
+        return "Произошла ошибка при обработке отзыва."
+
+
 async def fetch_reviews(user_id, kb_layout):
     headers = {
         "Authorization": WILDBERRIES_API_TOKEN,
@@ -56,8 +89,8 @@ async def fetch_reviews(user_id, kb_layout):
     }
 
     params = {
-        "isAnswered": "true",
-        "take": 4,
+        "isAnswered": "false",
+        "take": 2,
         "skip": 0,
     }  # Изменить isAnswered на false
     try:
@@ -70,7 +103,7 @@ async def fetch_reviews(user_id, kb_layout):
             # print(data)
             feedbacks = data.get("data", {}).get("feedbacks", [])
 
-            print(feedbacks)
+            # print(feedbacks)
 
             if not feedbacks:
                 logger.info("No feedbacks available.")
@@ -88,13 +121,18 @@ async def fetch_reviews(user_id, kb_layout):
                     "supplierName", "Unknown supplier"
                 )
 
-                print(
-                    f"Текст отзыва: {review_text}, Товар: {review_item}, Поставщик: {review_supplier}, Рейтинг: {review_rating}, Имя:{review_username}"
-                )
+                # chatgpt_response = await get_chatgpt_response(
+                #     review_supplier, review_item, review_rating, review_text
+                # )
+
+                # print(
+                #     f"Текст отзыва: {review_text}, Товар: {review_item}, Поставщик: {review_supplier}, Рейтинг: {review_rating}, Имя:{review_username}"
+                # )
+                # {chatgpt_response}
 
                 await bot.send_message(
                     user_id,
-                    f"<b>Новый отзыв:</b>\n\nМагазин: <b>{review_supplier}</b>\nИмя:{review_username}Товар: {review_item}\nОценка: {review_rating}\nТекст отзыва: {review_text}\n",
+                    f"<b>Новый отзыв:</b>\n\nМагазин: <b>{review_supplier}</b>\nИмя:{review_username}\nТовар: {review_item}\nОценка: {review_rating}\nТекст отзыва: {review_text}\n Ответ от ИИ:",
                     parse_mode=ParseMode.HTML,
                     reply_markup=kb_layout,
                 )
@@ -112,9 +150,9 @@ async def start_command(message: types.Message):
     active_users.add(user_id)
 
     kb_layout = create_rev_keyboard()
-
+    # TODO Добавить возможность подключения к нескольким аккаунтам по API-ключу/ам, отправленному пользователем
     await message.reply(
-        "Hello! I will send you new reviews from Wildberries automatically.",
+        "Привет! Я помогу тебе упростить ответы на отзывы Wildberries.",
         reply_markup=kb_menu_layout,
     )
 
@@ -127,6 +165,12 @@ async def handle_errors(update, exception):
     return True
 
 
+def main():
+    logging.info("starting")
+    executor.start_polling(dp, skip_updates=True)
+
+
 if __name__ == "__main__":
     # asyncio.get_event_loop().run_forever()
-    executor.start_polling(dp, skip_updates=True)
+    # py_hot_reload.run_with_reloader(main)
+    main()

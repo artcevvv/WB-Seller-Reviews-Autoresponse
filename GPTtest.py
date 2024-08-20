@@ -19,3 +19,4 @@ while True:
     reply = chat.choices[0].message.content
     print(f"ChatGPT: {reply}")
     messages.append({"role": "assistant", "content": reply})
+

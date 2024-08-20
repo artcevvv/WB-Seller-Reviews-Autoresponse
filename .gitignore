@@ -2,3 +2,4 @@
 /venv
 fakeWbApi/tmp
 *.sum
+/__pycache__/

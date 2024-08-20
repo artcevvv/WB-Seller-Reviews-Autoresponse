@@ -12,6 +12,8 @@ import (
 func main() {
 	r := chi.NewRouter()
 
+	mongoUri := "mongodb+srv://artcevvv:3Ovw2HRpJObudkcG@reviews.jbdvt.mongodb.net/?retryWrites=true&w=majority&appName=Reviews"
+
 	connectToDb(mongoUri)
 
 	r.Use(middleware.Logger)
