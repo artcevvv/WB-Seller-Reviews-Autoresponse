@@ -29,14 +29,13 @@ class APIKeyForm(StatesGroup):
 async def start_command(message: types.Message):
     user_id = message.chat.id
     active_users.add(user_id)
+
     with SessionLocal() as session:
         user = session.query(User).filter(User.telegram_user_id == user_id).first()
 
         if user:
             menu_layout = create_menu_keyboard()
-            await message.reply(
-                "Выбери действие", reply_markup=menu_layout
-            )  # Добавить меню
+            await message.reply("Выбери действие", reply_markup=menu_layout)
         else:
             contact_layout = contact_keyboard()
             user = User(telegram_user_id=user_id)
@@ -51,27 +50,6 @@ async def start_command(message: types.Message):
     # TODO Добавить возможность подключения к нескольким аккаунтам по API-ключу/ам, отправленному пользователем
 
     # await fetch_reviews(user_id, kb_layout)
-
-
-@dp.message_handler(content_types=types.ContentType.CONTACT)
-async def contact_handler(message: types.Message):
-    contact = message.contact
-    user_id = message.chat.id
-    keyboard = go_to_menu_keyboard()
-
-    with SessionLocal() as session:
-        user = session.query(User).filter(User.telegram_user_id == user_id).first()
-        if user and user.phone_number:
-            await message.reply(
-                "❌ Вы уже добавили свой номер телефона!", reply_markup=keyboard
-            )
-        else:
-            user.phone_number = contact.phone_number
-            session.commit()
-            await message.reply(
-                "✅ Спасибо! Ваш номер телефона сохранен.",
-                reply_markup=ReplyKeyboardRemove(),
-            )
 
 
 @dp.callback_query_handler(lambda c: c.data == "next")
@@ -100,25 +78,53 @@ async def reply_command(callback_query: types.CallbackQuery):
 
 
 @dp.callback_query_handler(lambda c: c.data == "add_api")
-async def add_api_handler(callback_query: types.CallbackQuery):
-    # keyboard = prev_keyboard()
+async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext):
+    telegram_user_id = callback_query.message.chat.id
+    contact = callback_query.message.contact
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
+    keyboard = contact_keyboard()
+    
+    print(contact)
 
-    await bot.edit_message_text(
-        text="Введите свой API-ключ продавца",
-        chat_id=chat_id,
-        message_id=original_message_id,
-        reply_markup=None,
-    )
+    with SessionLocal() as session:
+        user = (
+            session.query(User)
+            .filter(
+                User.telegram_user_id == telegram_user_id
+            )
+            .first()
+        )
 
-    await APIKeyForm.waiting_for_api_key.set()
+        if not user.phone_number:
+            await callback_query.message.reply(
+                "❌ Вы не зарегистрированы! Отправьте мне свой контакт, что бы зарегестрироваться.",
+                reply_markup=keyboard,
+            )
+            # await state.finish()
+            return
+
+        else:
+            await bot.edit_message_text(
+                text="Введите свой API-ключ продавца",
+                chat_id=chat_id,
+                message_id=original_message_id,
+                reply_markup=None,
+            )
+
+    await state.set_state(APIKeyForm.waiting_for_api_key.state) # Не робит
 
 
 @dp.message_handler(state=APIKeyForm.waiting_for_api_key)
 async def store_key(message: types.Message, state: FSMContext):
     telegram_user_id = message.chat.id
     api_key = message.text
+    
+    if len(api_key) < 300:
+        await message.answer("API ключ должен содержать не менее 300 символов. Пожалуйста, отправьте корректный API ключ.")
+        return
+
+    # keyboard = contact_keyboard()
 
     with SessionLocal() as session:
         user = (
@@ -126,19 +132,13 @@ async def store_key(message: types.Message, state: FSMContext):
             .filter(User.telegram_user_id == telegram_user_id)
             .first()
         )
-
-        if not user:
-            await message.reply("Вы не зарегистрированы!")
-            await state.finish()
-            return
-
         token = Token(user_id=user.id, wb_token=api_key)
         token.wb_token = api_key
-        
         session.add(token)
         session.commit()
 
-    await message.reply("API ключ успешно сохранен!")
+        await message.reply("API ключ успешно сохранен!")
+        await message.delete()
 
     await state.finish()
 
@@ -148,7 +148,6 @@ async def prev_button_handler(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
     keyboard = create_menu_keyboard()
-    # text= ""
     await bot.edit_message_text(
         text="Выбери действие",
         chat_id=chat_id,
@@ -162,12 +161,13 @@ async def howto_handler(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
     keyboard = prev_keyboard()
-    # text= ""
+    text = "Для авторизации в сервисе требуется токен Wildberries, который действует 180 дней после его создания.\n\n Для создания токена:\n1. В личном кабинете нажмите на имя профиля и выберите <a href='https://seller.wildberries.ru/supplier-settings/access-to-api'>Настройки → Доступ к API.</a>\n2. Выберите категорию 'Вопросы и отзывы'\n3. Нажмите <b>Создать токен</b>\n4. Скопируйте и отправьте токен боту, выбрав в меню опцию 'Добавить API ключ'."
     await bot.edit_message_text(
-        text="Функция еще не готова!",
+        text=text,
         chat_id=chat_id,
         message_id=original_message_id,
         reply_markup=keyboard,
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -189,3 +189,27 @@ async def setting_handler(callback_query: types.CallbackQuery):
 async def handle_errors(update, exception):
     logging.error(f"Update {update} caused error {exception}")
     return True
+
+
+@dp.message_handler(content_types=types.ContentType.CONTACT)
+async def contact_handler(message: types.Message):
+    contact = message.contact
+    user_id = message.chat.id
+    keyboard = go_to_menu_keyboard()
+
+    with SessionLocal() as session:
+        user = session.query(User).filter(User.telegram_user_id == user_id).first()
+        if user and user.phone_number:
+            await message.reply(
+                "❌ Вы уже добавили свой номер телефона!", reply_markup=keyboard
+            )
+        else:
+            user.phone_number = contact.phone_number
+            session.commit()
+            await message.reply(
+                "✅ Спасибо! Ваш номер телефона сохранен.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
+            await bot.edit_message_text(
+                "Выберите действие:"
+            )

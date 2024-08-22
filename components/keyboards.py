@@ -9,6 +9,7 @@ from aiogram.types import (
 
 
 def go_to_menu_keyboard():
+    ReplyKeyboardRemove()
     next_button = InlineKeyboardButton("Перейти к меню", callback_data="next")
     keyboard = InlineKeyboardMarkup().add(next_button)
     return keyboard
@@ -16,7 +17,7 @@ def go_to_menu_keyboard():
 
 def contact_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    contact_button = KeyboardButton("Отправить контакт", request_contact=True)
+    contact_button = KeyboardButton("📞 Отправить контакт", request_contact=True)
     keyboard.add(contact_button)
     return keyboard
 

@@ -7,7 +7,6 @@ from components.chatGPTresp import *
 from components.bot import *
 
 def main():
-    logging.info("starting")
     executor.start_polling(dp, skip_updates=True)
 
 if __name__ == "__main__":

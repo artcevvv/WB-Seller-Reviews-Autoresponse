@@ -25,7 +25,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     telegram_user_id = Column(Integer, unique=True, index=True)
-    phone_number = Column(Integer, ForeignKey("users.id"))
+    phone_number = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     created_at = Column(DateTime, default=datetime.now())
 
     tokens = relationship("Token", back_populates="owner")
