@@ -1,4 +1,7 @@
 from aiogram import Bot, Dispatcher, types
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import load_dotenv
 import os
 import logging
@@ -11,10 +14,16 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 active_users = set()
 sent_reviews_ids = set()
 message_to_review_map = {}
+
+
+class APIKeyForm(StatesGroup):
+    waiting_for_api_key = State()
+
 
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
@@ -49,11 +58,13 @@ async def contact_handler(message: types.Message):
     contact = message.contact
     user_id = message.chat.id
     keyboard = go_to_menu_keyboard()
-    
+
     with SessionLocal() as session:
         user = session.query(User).filter(User.telegram_user_id == user_id).first()
         if user and user.phone_number:
-            await message.reply("❌ Вы уже добавили свой номер телефона!", reply_markup=keyboard)
+            await message.reply(
+                "❌ Вы уже добавили свой номер телефона!", reply_markup=keyboard
+            )
         else:
             user.phone_number = contact.phone_number
             session.commit()
@@ -90,15 +101,46 @@ async def reply_command(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(lambda c: c.data == "add_api")
 async def add_api_handler(callback_query: types.CallbackQuery):
-    keyboard = prev_keyboard()
+    # keyboard = prev_keyboard()
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
+
     await bot.edit_message_text(
-        text="Функция еще не готова!",
+        text="Введите свой API-ключ продавца",
         chat_id=chat_id,
         message_id=original_message_id,
-        reply_markup=keyboard,
+        reply_markup=None,
     )
+
+    await APIKeyForm.waiting_for_api_key.set()
+
+
+@dp.message_handler(state=APIKeyForm.waiting_for_api_key)
+async def store_key(message: types.Message, state: FSMContext):
+    telegram_user_id = message.chat.id
+    api_key = message.text
+
+    with SessionLocal() as session:
+        user = (
+            session.query(User)
+            .filter(User.telegram_user_id == telegram_user_id)
+            .first()
+        )
+
+        if not user:
+            await message.reply("Вы не зарегистрированы!")
+            await state.finish()
+            return
+
+        token = Token(user_id=user.id, wb_token=api_key)
+        token.wb_token = api_key
+        
+        session.add(token)
+        session.commit()
+
+    await message.reply("API ключ успешно сохранен!")
+
+    await state.finish()
 
 
 @dp.callback_query_handler(lambda c: c.data == "prev_button")
