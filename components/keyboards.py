@@ -24,6 +24,9 @@ def contact_keyboard():
 
 def create_menu_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=2)
+    add_gotoanswering_button = InlineKeyboardButton(
+        "▶️ Приступить к ответам", callback_data="answer"
+    )
     add_token_button = InlineKeyboardButton(
         "🔑 Добавить API ключ", callback_data="add_api"
     )
@@ -31,7 +34,7 @@ def create_menu_keyboard():
         "❓ Где взять API ключ?", callback_data="howto"
     )
     add_options_button = InlineKeyboardButton("⚙️ Настройки", callback_data="settings")
-    keyboard.add(add_token_button, add_howto_button, add_options_button)
+    keyboard.add(add_gotoanswering_button, add_token_button, add_howto_button, add_options_button)
     return keyboard
 
 
@@ -51,7 +54,7 @@ def prev_keyboard():
 
 def review_answer_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=2)
-    skip_button = InlineKeyboardButton("Пропустить", callback_data="skip")
-    reply_button = InlineKeyboardButton("Ответить", callback_data="reply")
+    skip_button = InlineKeyboardButton("⏩️ Пропустить", callback_data="skip")
+    reply_button = InlineKeyboardButton("💬 Ответить", callback_data="reply")
     keyboard.add(skip_button, reply_button)
     return keyboard

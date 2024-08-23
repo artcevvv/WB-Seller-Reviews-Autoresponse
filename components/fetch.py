@@ -6,7 +6,7 @@ from aiogram.types import ParseMode
 
 from components.chatGPTresp import *
 from components.database import *
-from components.bot import bot, message_to_review_map
+from components.config import *
 
 load_dotenv()
 
