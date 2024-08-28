@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, URL
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, URL, BigInteger
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from datetime import datetime
 import os
@@ -28,8 +28,7 @@ from datetime import datetime
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    telegram_user_id = Column(Integer, unique=True, index=True)
-    # Change from Integer to String to store phone numbers
+    telegram_user_id = Column(BigInteger, unique=True, index=True) # Basically Int type could be fine if telegram user id's weren't that big(they can easily extend the possible limit of INT values)
     phone_number = Column(String, unique=True, nullable=True)  # Updated line
     created_at = Column(DateTime, default=datetime.now())
 

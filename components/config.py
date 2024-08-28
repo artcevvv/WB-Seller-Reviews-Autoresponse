@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TRANZZO_TEST_PAYMENT = os.getenv("TRANZZO_TEST_PAYMENT")
 
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)

@@ -8,9 +8,7 @@ from components.database import *
 from components.keyboards import *
 from components.fetch import fetch_reviews
 from components.config import *
-
-
-
+from components.messages import *
 
 
 class APIKeyForm(StatesGroup):
@@ -58,6 +56,7 @@ async def next_command(callback_query: types.CallbackQuery):
         reply_markup=keyboard,
     )
 
+
 @dp.callback_query_handler(lambda c: c.data == "answer")
 async def answer_command(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
@@ -66,6 +65,7 @@ async def answer_command(callback_query: types.CallbackQuery):
         await fetch_reviews(user_id, kb_layout)
     except Exception as e:
         logging.info({e})
+
 
 @dp.callback_query_handler(lambda c: c.data == "reply")
 async def reply_command(callback_query: types.CallbackQuery):
@@ -84,15 +84,13 @@ async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
     keyboard = contact_keyboard()
-    
+
     # print(contact)
 
     with SessionLocal() as session:
         user = (
             session.query(User)
-            .filter(
-                User.telegram_user_id == telegram_user_id
-            )
+            .filter(User.telegram_user_id == telegram_user_id)
             .first()
         )
 
@@ -112,16 +110,18 @@ async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext
                 reply_markup=None,
             )
 
-    await state.set_state(APIKeyForm.waiting_for_api_key.state) # Не робит
+    await state.set_state(APIKeyForm.waiting_for_api_key.state)  # Не робит
 
 
 @dp.message_handler(state=APIKeyForm.waiting_for_api_key)
 async def store_key(message: types.Message, state: FSMContext):
     telegram_user_id = message.chat.id
     api_key = message.text
-    
+
     if len(api_key) < 300:
-        await message.answer("❌ API ключ должен содержать не менее 300 символов. Пожалуйста, отправьте корректный API ключ.")
+        await message.answer(
+            "❌ API ключ должен содержать не менее 300 символов. Пожалуйста, отправьте корректный API ключ."
+        )
         return
 
     # keyboard = contact_keyboard()
@@ -184,6 +184,23 @@ async def setting_handler(callback_query: types.CallbackQuery):
         reply_markup=keyboard,
     )
 
+
+@dp.message_handler(commands=["buy"])
+async def proccess_buy_comma(message: types.Message):
+    if TRANZZO_TEST_PAYMENT.split(":")[1] == "TEST":
+        await bot.send_message(message.chat.id, text="test")
+
+    await bot.send_invoice(
+        message.chat.id,
+        title="1000 токенов",
+        description="1000 токенов",
+        provider_token=TRANZZO_TEST_PAYMENT,
+        prices=[PRICE],
+        currency="kzt",
+        payload= 'some-invoice-payload-for-our-internal-us'
+    )
+
+
 @dp.message_handler(content_types=types.ContentType.CONTACT)
 async def contact_handler(message: types.Message):
     contact = message.contact
@@ -204,14 +221,10 @@ async def contact_handler(message: types.Message):
                 "✅ Спасибо! Ваш номер телефона сохранен.",
                 reply_markup=ReplyKeyboardRemove(),
             )
-            await message.answer(
-                "⬇️ Выберите действие:",
-                reply_markup=keyboard
-            )
+            await message.answer("⬇️ Выберите действие:", reply_markup=keyboard)
+
 
 @dp.errors_handler()
 async def handle_errors(update, exception):
     logging.error(f"Update {update} caused error {exception}")
     return True
-
-
