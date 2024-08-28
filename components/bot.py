@@ -188,6 +188,7 @@ async def setting_handler(callback_query: types.CallbackQuery):
 async def contact_handler(message: types.Message):
     contact = message.contact
     user_id = message.chat.id
+    # original_message_id = message.message_id
     keyboard = go_to_menu_keyboard()
 
     with SessionLocal() as session:
@@ -203,8 +204,9 @@ async def contact_handler(message: types.Message):
                 "✅ Спасибо! Ваш номер телефона сохранен.",
                 reply_markup=ReplyKeyboardRemove(),
             )
-            await bot.edit_message_text(
-                "⬇️ Выберите действие:"
+            await message.answer(
+                "⬇️ Выберите действие:",
+                reply_markup=keyboard
             )
 
 @dp.errors_handler()

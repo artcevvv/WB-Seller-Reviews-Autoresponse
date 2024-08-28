@@ -21,11 +21,16 @@ engine = create_engine(POSTGRES_SQL_URL)
 Base = declarative_base()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from datetime import datetime
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     telegram_user_id = Column(Integer, unique=True, index=True)
-    phone_number = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    # Change from Integer to String to store phone numbers
+    phone_number = Column(String, unique=True, nullable=True)  # Updated line
     created_at = Column(DateTime, default=datetime.now())
 
     tokens = relationship("Token", back_populates="owner")
