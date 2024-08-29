@@ -10,7 +10,7 @@ from aiogram.types import (
 
 def go_to_menu_keyboard():
     ReplyKeyboardRemove()
-    next_button = InlineKeyboardButton("Перейти к меню", callback_data="next")
+    next_button = InlineKeyboardButton("▶️ Перейти к меню", callback_data="next")
     keyboard = InlineKeyboardMarkup().add(next_button)
     return keyboard
 

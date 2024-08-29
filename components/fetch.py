@@ -7,6 +7,7 @@ from aiogram.types import ParseMode
 from components.chatGPTresp import *
 from components.database import *
 from components.config import *
+from components.keyboards import *
 
 load_dotenv()
 
@@ -18,6 +19,17 @@ logger = logging.getLogger(__name__)
 async def fetch_reviews(user_id, kb_layout):
     with SessionLocal() as session:
         user = session.query(User).filter(User.telegram_user_id == user_id).first()
+        menu_layout = go_to_menu_keyboard()
+        
+        if not user or not user.tokens:
+            logger.info(f"No user or tokens found for user ID: {user_id}")
+            await bot.send_message(
+                user_id,
+                "❌ Необходимо добавить хотя бы один API токен!",
+                parse_mode = ParseMode.HTML
+            )
+            return
+        
         if user and user.tokens:
             for token in user.tokens:
                 headers = {

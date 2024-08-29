@@ -37,9 +37,7 @@ async def start_command(message: types.Message):
                 reply_markup=contact_layout,
             )
 
-    # TODO Добавить возможность подключения к нескольким аккаунтам по API-ключу/ам, отправленному пользователем
-
-    # await fetch_reviews(user_id, kb_layout)
+    # TODO 
 
 
 @dp.callback_query_handler(lambda c: c.data == "next")
@@ -62,6 +60,7 @@ async def answer_command(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     kb_layout = review_answer_keyboard()
     try:
+        logging.info(f"Handling callback query for user: {user_id}")
         await fetch_reviews(user_id, kb_layout)
     except Exception as e:
         logging.info({e})
@@ -77,63 +76,66 @@ async def reply_command(callback_query: types.CallbackQuery):
     await bot.send_message(callback_query.from_user.id, f"{review_id}")
 
 
+from aiogram import types
+from aiogram.dispatcher import FSMContext
+import logging
+
+logger = logging.getLogger(__name__)
+
 @dp.callback_query_handler(lambda c: c.data == "add_api")
 async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext):
     telegram_user_id = callback_query.message.chat.id
-    contact = callback_query.message.contact
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
     keyboard = contact_keyboard()
 
-    # print(contact)
-
     with SessionLocal() as session:
-        user = (
-            session.query(User)
-            .filter(User.telegram_user_id == telegram_user_id)
-            .first()
-        )
+        user = session.query(User).filter(User.telegram_user_id == telegram_user_id).first()
 
-        if not user.phone_number:
+        if not user or not user.phone_number:
             await callback_query.message.reply(
-                "❌ Вы не зарегистрированы! Отправьте мне свой контакт, что бы зарегестрироваться.",
+                "❌ Вы не зарегистрированы! Отправьте мне свой контакт, чтобы зарегистрироваться.",
                 reply_markup=keyboard,
             )
-            # await state.finish()
             return
-
         else:
             await bot.edit_message_text(
-                text="Введите свой API-ключ продавца",
+                text="Введите свой API-ключ продавца.\nДля отмены введите команду '/cancel'",
                 chat_id=chat_id,
                 message_id=original_message_id,
                 reply_markup=None,
             )
 
-    await state.set_state(APIKeyForm.waiting_for_api_key.state)  # Не робит
+    # Set the state to waiting for API key
+    await state.set_state(APIKeyForm.waiting_for_api_key.state)
+    logger.info(f"State set to APIKeyForm.waiting_for_api_key for user {telegram_user_id}")
 
+@dp.message_handler(commands='cancel', state='*')
+async def cancel_command(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    print(current_state) # Debug
+    
+    if current_state is None:
+        await message.reply("❓ Нечего отменять.")
+        
+
+    await state.finish()
+    await message.reply("✅ Операция успешно отменена.")
 
 @dp.message_handler(state=APIKeyForm.waiting_for_api_key)
 async def store_key(message: types.Message, state: FSMContext):
     telegram_user_id = message.chat.id
     api_key = message.text
 
-    if len(api_key) < 300:
-        await message.answer(
-            "❌ API ключ должен содержать не менее 300 символов. Пожалуйста, отправьте корректный API ключ."
-        )
-        return
-
-    # keyboard = contact_keyboard()
 
     with SessionLocal() as session:
-        user = (
-            session.query(User)
-            .filter(User.telegram_user_id == telegram_user_id)
-            .first()
-        )
+        if len(api_key) < 300:
+            await message.answer(
+                "❌ API ключ должен содержать не менее 300 символов. Пожалуйста, отправьте корректный API ключ."
+            )
+            return
+        user = session.query(User).filter(User.telegram_user_id == telegram_user_id).first()
         token = Token(user_id=user.id, wb_token=api_key)
-        token.wb_token = api_key
         session.add(token)
         session.commit()
 
@@ -141,7 +143,6 @@ async def store_key(message: types.Message, state: FSMContext):
         await message.delete()
 
     await state.finish()
-
 
 @dp.callback_query_handler(lambda c: c.data == "prev_button")
 async def prev_button_handler(callback_query: types.CallbackQuery):
@@ -178,7 +179,7 @@ async def setting_handler(callback_query: types.CallbackQuery):
     keyboard = prev_keyboard()
     # text= ""
     await bot.edit_message_text(
-        text="Функция еще не готова!",
+        text="❌ Функция еще не готова!",
         chat_id=chat_id,
         message_id=original_message_id,
         reply_markup=keyboard,
@@ -226,5 +227,5 @@ async def contact_handler(message: types.Message):
 
 @dp.errors_handler()
 async def handle_errors(update, exception):
-    logging.error(f"Update {update} caused error {exception}")
+    logging.error(f"Сообщение {update} вызвало ошибку {exception}")
     return True
