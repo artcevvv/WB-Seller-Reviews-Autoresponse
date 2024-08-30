@@ -10,6 +10,8 @@ from components.fetch import fetch_reviews
 from components.config import *
 from components.messages import *
 
+from components.bot_components.options import *
+
 
 class APIKeyForm(StatesGroup):
     waiting_for_api_key = State()
@@ -25,19 +27,20 @@ async def start_command(message: types.Message):
 
         if user:
             menu_layout = create_menu_keyboard()
-            await message.reply("⬇️ Выберите действие", reply_markup=menu_layout)
+            await message.reply("⬇️ Выберите действие"
+                                f"У тебя {user.points}\n",
+                                reply_markup=menu_layout)
         else:
             contact_layout = contact_keyboard()
-            user = User(telegram_user_id=user_id)
+            user = User(telegram_user_id=user_id, points = 10)
             session.add(user)
             session.commit()
             await message.reply(
                 "Привет!👋 Я помогу тебе упростить ответы на отзывы Wildberries.\n"
-                "Пожалуйста, отправь мне свой контакт, чтобы я мог тебя зарегистрировать.",
+                "Пожалуйста, отправь мне свой контакт, чтобы я мог тебя зарегистрировать.\n"
+                f"У тебя {user.points}",
                 reply_markup=contact_layout,
             )
-
-    # TODO 
 
 
 @dp.callback_query_handler(lambda c: c.data == "next")
@@ -61,7 +64,16 @@ async def answer_command(callback_query: types.CallbackQuery):
     kb_layout = review_answer_keyboard()
     try:
         logging.info(f"Handling callback query for user: {user_id}")
-        await fetch_reviews(user_id, kb_layout)
+        with SessionLocal() as session:
+            user = session.query(User).filter(User.telegram_user_id == user_id).first()
+            
+            if user.points <= 0:
+                await bot.send_message(
+                    user_id,
+                    "❌ У вас недостаточно токенов для ответа. Пожалуйста, пополните баланс."
+                )
+                return
+            await fetch_reviews(user_id, kb_layout)
     except Exception as e:
         logging.info({e})
 
@@ -190,17 +202,79 @@ async def setting_handler(callback_query: types.CallbackQuery):
 async def proccess_buy_comma(message: types.Message):
     if TRANZZO_TEST_PAYMENT.split(":")[1] == "TEST":
         await bot.send_message(message.chat.id, text="test")
+        
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    for option in POINTS_PRICES:
+        keyboard.add(
+            InlineKeyboardButton(
+                text=f"{option['description']}",    
+                callback_data=f"buy_{option['amount']}"
+            )
+        )
 
-    await bot.send_invoice(
-        message.chat.id,
-        title="1000 токенов",
-        description="1000 токенов",
-        provider_token=TRANZZO_TEST_PAYMENT,
-        prices=[PRICE],
-        currency="kzt",
-        payload= 'some-invoice-payload-for-our-internal-us'
+    # await bot.send_invoice( 
+    #     message.chat.id,
+    #     title="1000 токенов",
+    #     description="1000 токенов",
+    #     provider_token=TRANZZO_TEST_PAYMENT,
+    #     prices=[PRICE],
+    #     currency="kzt",
+    #     payload= 'some-invoice-payload-for-our-internal-us'
+    # )
+    
+    await message.reply(
+        "Выберите количество токенов, которое желаете приобрести.",
+        reply_markup=keyboard
     )
 
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith("buy_"))
+async def handle_buy_callback(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    package_amount = int(callback_query.data.split("_"[1]))
+    
+    selected_package = next((p for p in POINTS_PRICES if p["amount"] == package_amount), None)
+    
+    if not selected_package:
+        await bot.answer_callback_query(callback_query.id, text="Произошла ошибка при покупке токенов!")
+        return
+
+    bot.send_invoice(
+        chat_id=user_id,
+        title=f"{selected_package['amount']} токенов",
+        description=f"Покупка {selected_package} токенов",
+        provider_token=TRANZZO_TEST_PAYMENT,
+        currency="KZT",
+        prices=[{"label": f"{selected_package['amount']} токенов", "amount": selected_package['price'] * 100}],
+        payload=f"buy_tokens_{selected_package['amount']}"
+    )
+    
+    await bot.answer_callback_query(callback_query.id)
+    
+@dp.pre_checkout_query_handler(lambda query: True)
+async def process_pre_checkout(pre_checkout_query: types.PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+    
+@dp.message_handler(content_types=types.ContentType.SUCCESSFUL_PAYMENT)
+async def process_successful_payment(message: types.Message):
+    user_id = message.chat.id
+    payload = message.successful_payment.invoice_payload
+    
+    token_amount = int(payload.split("_"[2]))
+    
+    with SessionLocal() as session:
+        user = session.query(User).filter(User.telegram_user_id == user_id).first()
+        
+        if user:
+            user.points += token_amount
+            session.commit()
+            
+            await message.reply(
+                f"✅ Покупка успешна! Вы получили {token_amount} токенов. У вас теперь {user.tokens} токенов."
+            ) 
+        else:
+            await message.reply("❌ Пользователь не найден.")
 
 @dp.message_handler(content_types=types.ContentType.CONTACT)
 async def contact_handler(message: types.Message):

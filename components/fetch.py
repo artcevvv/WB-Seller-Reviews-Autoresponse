@@ -39,7 +39,7 @@ async def fetch_reviews(user_id, kb_layout):
 
                 params = {
                     "isAnswered": "true",
-                    "take": 1,
+                    "take": 10,
                     "skip": 0,
                 }  # Изменить isAnswered на false
                 try:
@@ -85,13 +85,24 @@ async def fetch_reviews(user_id, kb_layout):
                             #     f"Текст отзыва: {review_text}, Товар: {review_item}, Поставщик: {review_supplier}, Рейтинг: {review_rating}, Имя:{review_username}"
                             # )
                             # {chatgpt_response}
+                            
+                            if user.points <= 0:
+                                await bot.send_message(
+                                user_id,
+                                "❌ У вас недостаточно токенов для ответа. Пожалуйста, пополните баланс."
+                                )
+                                return
 
                             sent_message = await bot.send_message(
                                 user_id,
-                                f"<b>Новый отзыв:</b>\n\nМагазин: <b>{review_supplier}</b>\nИмя:{review_username}\nТовар: {review_item}\nОценка: {review_rating}\nТекст отзыва: {review_text}\nОтвет от ИИ: {chatgpt_response}",
+                                f"<b>Новый отзыв:</b>\n\nМагазин: <b>{review_supplier}</b>\nИмя:{review_username}\nТовар: {review_item}\nОценка: {review_rating}\nТекст отзыва: {review_text}\nОтвет от ИИ: {chatgpt_response}\n<b>Осталось токенов:{user.points}</b>",
                                 parse_mode=ParseMode.HTML,
                                 reply_markup=kb_layout,
+                                
                             )
+                            
+                            user.points -= 1
+                            session.commit()
 
                             message_to_review_map[sent_message.message_id] = review_id
                     else:

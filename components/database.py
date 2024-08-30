@@ -31,6 +31,7 @@ class User(Base):
     telegram_user_id = Column(BigInteger, unique=True, index=True) # Basically Int type could be fine if telegram user id's weren't that big(they can easily extend the possible limit of INT values)
     phone_number = Column(String, unique=True, nullable=True)  # Updated line
     created_at = Column(DateTime, default=datetime.now())
+    points = Column(Integer, default=10)
 
     tokens = relationship("Token", back_populates="owner")
 
