@@ -1,4 +1,5 @@
 import os
+import logging
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import load_dotenv
@@ -7,6 +8,8 @@ load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TRANZZO_TEST_PAYMENT = os.getenv("TRANZZO_TEST_PAYMENT")
+logger = logging.getLogger(__name__)
+
 
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)

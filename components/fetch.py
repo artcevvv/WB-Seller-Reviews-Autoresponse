@@ -98,7 +98,6 @@ async def fetch_reviews(user_id, kb_layout):
                                 f"<b>Новый отзыв:</b>\n\nМагазин: <b>{review_supplier}</b>\nИмя:{review_username}\nТовар: {review_item}\nОценка: {review_rating}\nТекст отзыва: {review_text}\nОтвет от ИИ: {chatgpt_response}\n<b>Осталось токенов:{user.points}</b>",
                                 parse_mode=ParseMode.HTML,
                                 reply_markup=kb_layout,
-                                
                             )
                             
                             user.points -= 1

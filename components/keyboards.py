@@ -34,7 +34,8 @@ def create_menu_keyboard():
         "❓ Где взять API ключ?", callback_data="howto"
     )
     add_options_button = InlineKeyboardButton("⚙️ Настройки", callback_data="settings")
-    keyboard.add(add_gotoanswering_button, add_token_button, add_howto_button, add_options_button)
+    add_buy_button = InlineKeyboardButton("💰 Токены", callback_data="tokens")
+    keyboard.add(add_gotoanswering_button, add_token_button, add_howto_button, add_options_button, add_buy_button)
     return keyboard
 
 
@@ -57,4 +58,11 @@ def review_answer_keyboard():
     skip_button = InlineKeyboardButton("⏩️ Пропустить", callback_data="skip")
     reply_button = InlineKeyboardButton("💬 Ответить", callback_data="reply")
     keyboard.add(skip_button, reply_button)
+    return keyboard
+
+def tokens_kb_layout():
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    buy_button = InlineKeyboardButton("🏪 Купить токены", callback_data="buy")
+    what_is_button = InlineKeyboardButton("❓ Что такое токены?", callback_data="what_is")
+    keyboard.add(buy_button, what_is_button)
     return keyboard
