@@ -66,3 +66,9 @@ def tokens_kb_layout():
     what_is_button = InlineKeyboardButton("❓ Что такое токены?", callback_data="what_is")
     keyboard.add(buy_button, what_is_button)
     return keyboard
+
+def go_to_menu_main():
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    menu_button = KeyboardButton("/menu")
+    keyboard.add(menu_button)
+    return keyboard
