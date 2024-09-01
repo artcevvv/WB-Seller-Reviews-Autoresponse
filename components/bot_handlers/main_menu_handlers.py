@@ -1,6 +1,7 @@
 from aiogram import types
 
-
+from components.config import *
+from components.database import *
 from components.bot import *
 
 @dp.callback_query_handler(lambda c: c.data == "answer")

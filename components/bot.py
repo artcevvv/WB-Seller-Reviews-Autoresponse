@@ -15,7 +15,7 @@ from components.bot_handlers.buy_tokens_handler import *
 from components.bot_handlers.contact_handler import *
 from components.bot_handlers.API_tokens_handler import *
 from components.bot_handlers.main_menu_handlers import *
-
+from components.bot_handlers.info_handlers import *
 
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):

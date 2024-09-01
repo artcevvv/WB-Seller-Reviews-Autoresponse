@@ -12,15 +12,15 @@ class APIKeyForm(StatesGroup):
 
 @dp.callback_query_handler(lambda c: c.data == "add_api")
 async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext):
-    telegram_user_id = callback_query.message.chat.id
     chat_id = callback_query.message.chat.id
     original_message_id = callback_query.message.message_id
+    
     keyboard = contact_keyboard()
 
     with SessionLocal() as session:
         user = (
             session.query(User)
-            .filter(User.telegram_user_id == telegram_user_id)
+            .filter(User.telegram_user_id == chat_id)
             .first()
         )
 
@@ -41,7 +41,7 @@ async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext
     # Set the state to waiting for API key
     await state.set_state(APIKeyForm.waiting_for_api_key.state)
     logger.info(
-        f"State set to APIKeyForm.waiting_for_api_key for user {telegram_user_id}"
+        f"State set to APIKeyForm.waiting_for_api_key for user {chat_id}"
     )
 
 

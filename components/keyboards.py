@@ -30,12 +30,16 @@ def create_menu_keyboard():
     add_token_button = InlineKeyboardButton(
         "🔑 Добавить API ключ", callback_data="add_api"
     )
-    add_howto_button = InlineKeyboardButton(
-        "❓ Где взять API ключ?", callback_data="howto"
-    )
     add_options_button = InlineKeyboardButton("⚙️ Настройки", callback_data="settings")
-    add_buy_button = InlineKeyboardButton("💰 Токены", callback_data="tokens")
-    keyboard.add(add_gotoanswering_button, add_token_button, add_howto_button, add_options_button, add_buy_button)
+    add_buy_button = InlineKeyboardButton("💰 Купить токены", callback_data="buy")
+    add_info_button = InlineKeyboardButton("ℹ Информация", callback_data="info")
+    keyboard.add(
+        add_gotoanswering_button,
+        add_token_button,
+        add_options_button,
+        add_buy_button,
+        add_info_button,
+    )
     return keyboard
 
 
@@ -60,15 +64,30 @@ def review_answer_keyboard():
     keyboard.add(skip_button, reply_button)
     return keyboard
 
+
 def tokens_kb_layout():
     keyboard = InlineKeyboardMarkup(row_width=2)
     buy_button = InlineKeyboardButton("🏪 Купить токены", callback_data="buy")
-    what_is_button = InlineKeyboardButton("❓ Что такое токены?", callback_data="what_is")
-    keyboard.add(buy_button, what_is_button)
+    keyboard.add(buy_button)
     return keyboard
+
 
 def go_to_menu_main():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     menu_button = KeyboardButton("/menu")
     keyboard.add(menu_button)
+    return keyboard
+
+
+def info_kb_layout():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    howto_button = InlineKeyboardButton("❓ Где взять API ключ?", callback_data="howto")
+    what_is_tokens_button = InlineKeyboardButton(
+        "❓ Что такое токены?", callback_data="what_is"
+    )
+    how_to_use_button = InlineKeyboardButton(
+        "❓ Как пользоваться ботом?", callback_data="howto_bot"
+    )
+    prev_button = InlineKeyboardButton("◀️ Назад", callback_data="prev_button")
+    keyboard.add(howto_button, what_is_tokens_button, how_to_use_button, prev_button)
     return keyboard
