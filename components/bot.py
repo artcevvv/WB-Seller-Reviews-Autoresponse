@@ -8,7 +8,6 @@ from components.database import *
 from components.keyboards import *
 from components.fetch import fetch_reviews
 from components.config import *
-from components.messages import *
 
 from components.bot_components.options import *
 from components.bot_handlers.buy_tokens_handler import *
@@ -16,6 +15,7 @@ from components.bot_handlers.contact_handler import *
 from components.bot_handlers.API_tokens_handler import *
 from components.bot_handlers.main_menu_handlers import *
 from components.bot_handlers.info_handlers import *
+from components.bot_handlers.respond_handlers import *
 
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
@@ -74,19 +74,6 @@ async def next_command(callback_query: types.CallbackQuery):
         message_id=original_message_id,
         reply_markup=keyboard,
     )
-
-
-
-
-@dp.callback_query_handler(lambda c: c.data == "reply")
-async def reply_command(callback_query: types.CallbackQuery):
-    original_message_id = callback_query.message.message_id
-    await bot.answer_callback_query(callback_query.id)
-    review_id = message_to_review_map.get(
-        original_message_id, "Review ID is not stored!"
-    )
-    await bot.send_message(callback_query.from_user.id, f"{review_id}")
-
 
 @dp.callback_query_handler(lambda c: c.data == "prev_button")
 async def prev_button_handler(callback_query: types.CallbackQuery):

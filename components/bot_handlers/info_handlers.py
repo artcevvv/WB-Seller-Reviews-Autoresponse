@@ -1,6 +1,7 @@
 from aiogram import types
 
-from components.bot import *
+from components.config import *
+from components.keyboards import *
 
 @dp.callback_query_handler(lambda c: c.data == "info")
 async def info_button_handler(callback_query: types.CallbackQuery):

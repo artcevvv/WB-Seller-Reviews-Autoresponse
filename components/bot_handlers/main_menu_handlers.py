@@ -3,6 +3,9 @@ from aiogram import types
 from components.config import *
 from components.database import *
 from components.bot import *
+from components.keyboards import *
+from components.fetch import *
+
 
 @dp.callback_query_handler(lambda c: c.data == "answer")
 async def answer_command(callback_query: types.CallbackQuery):
@@ -21,7 +24,8 @@ async def answer_command(callback_query: types.CallbackQuery):
                 return
             await fetch_reviews(user_id, kb_layout)
     except Exception as e:
-        logging.info({e})
+        logging.info(f"Error handling answer command: {e}")
+
 
 @dp.callback_query_handler(lambda c: c.data == "howto")
 async def howto_handler(callback_query: types.CallbackQuery):

@@ -61,7 +61,7 @@ def review_answer_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=2)
     skip_button = InlineKeyboardButton("⏩️ Пропустить", callback_data="skip")
     reply_button = InlineKeyboardButton("💬 Ответить", callback_data="reply")
-    keyboard.add(skip_button, reply_button)
+    keyboard.add(reply_button, skip_button)
     return keyboard
 
 
