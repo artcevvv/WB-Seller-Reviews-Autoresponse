@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, URL, BigInteger
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, URL, BigInteger, ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from datetime import datetime
 import os
@@ -25,15 +25,35 @@ from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
+class ReviewResponse(Base):
+    __tablename__ = "review_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    review_id = Column(String, nullable=False)
+    product_name = Column(String, nullable=True)
+    message_id = Column(BigInteger, unique=True, nullable=False)
+    review_text = Column(String, nullable=True)
+    review_rating = Column(String, nullable=True)
+    chatgpt_response = Column(String, nullable=False)
+    response_sent = Column(DateTime, default=datetime.now)
+
+    # Relationship with User
+    user = relationship("User", back_populates="responses")
+
+# Add this to the User model for the relationship
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    telegram_user_id = Column(BigInteger, unique=True, index=True) # Basically Int type could be fine if telegram user id's weren't that big(they can easily extend the possible limit of INT values)
-    phone_number = Column(String, unique=True, nullable=True)  # Updated line
+    telegram_user_id = Column(BigInteger, unique=True, index=True)
+    phone_number = Column(String, unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.now())
     points = Column(Integer, default=10)
+    review_ids = Column(ARRAY(String), nullable=True)
 
     tokens = relationship("Token", back_populates="owner")
+    responses = relationship("ReviewResponse", back_populates="user")
+
 
 
 class Token(Base):

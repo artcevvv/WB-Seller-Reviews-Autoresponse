@@ -11,29 +11,41 @@ async def reply_command(callback_query: types.CallbackQuery):
     original_message_id = callback_query.message.message_id
     await bot.answer_callback_query(callback_query.id)
 
-    # Get the review and response data from the stored dictionary
-    review_data = message_to_review_and_response_map.get(original_message_id)
-    if not review_data:
-        await bot.send_message(
-            callback_query.from_user.id, "Review data is not stored!"
-        )
-        return
+    with SessionLocal() as session:
+        # Get the review data from the ReviewResponse table using message_id
+        review_response = session.query(ReviewResponse).filter_by(message_id=original_message_id).first()
 
-    review_id = review_data["review_id"]
-    chatgpt_response = review_data["chatgpt_response"]
-    token = review_data["token"]
+        if not review_response:
+            await bot.send_message(callback_query.from_user.id, "Review data is not stored!")
+            return
 
-    # Send the reply through Wildberries API
-    success = await send_reply_to_review(review_id, chatgpt_response, token)
+        # Retrieve the user from the review response and their tokens
+        user = session.query(User).filter_by(id=review_response.user_id).first()
 
-    if success:
-        await bot.send_message(
-            callback_query.from_user.id, "✅ Ответ на отзыв успешно отправлен!"
-        )
-    else:
-        await bot.send_message(
-            callback_query.from_user.id, "❌ Не удалось отправить ответ на отзыв."
-        )
+        if not user or not user.tokens:
+            await bot.send_message(callback_query.from_user.id, "User tokens not found!")
+            return
+
+        # Extract the token that was originally used for this review
+        token = user.tokens[0].wb_token  # Assuming you use the first token, adjust if necessary
+
+        # Get review and response data
+        review_id = review_response.review_id
+        chatgpt_response = review_response.chatgpt_response
+
+        # Send the reply through Wildberries API using the fetched token
+        success = await send_reply_to_review(review_id, chatgpt_response, token)
+
+        if success:
+            await bot.send_message(
+                callback_query.from_user.id, "✅ Ответ на отзыв успешно отправлен!"
+            )
+        else:
+            await bot.send_message(
+                callback_query.from_user.id, "❌ Не удалось отправить ответ на отзыв."
+            )
+
+
 
 
 @dp.callback_query_handler(lambda c: c.data == "skip")
