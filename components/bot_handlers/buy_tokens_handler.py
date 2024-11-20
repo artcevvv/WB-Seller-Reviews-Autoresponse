@@ -25,7 +25,7 @@ async def proccess_buy_comma(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     if TRANZZO_TEST_PAYMENT.split(":")[1] == "TEST":
         await bot.send_message(
-            chat_id, text="❗️ Тестовая оплата! Карта: 4242 4242 4242 4242"
+            chat_id, text="❗️ Проводится тестовая оплата ❗️ \nКарта: 4242 4242 4242 4242"
         )
 
     keyboard = InlineKeyboardMarkup(row_width=1)
@@ -33,13 +33,13 @@ async def proccess_buy_comma(callback_query: types.CallbackQuery):
     for option in POINTS_PRICES:
         keyboard.add(
             InlineKeyboardButton(
-                text=f"{option['description']}", callback_data=f"buy_{option['amount']}"
+                text=f"🛒 {option['description']}", callback_data=f"buy_{option['amount']}"
             )
         )
 
     await bot.send_message(
         chat_id=chat_id,
-        text="Выберите количество токенов, которое желаете приобрести.",
+        text="⬇️ Выберите количество токенов, которое желаете приобрести.",
         reply_markup=keyboard,
     )
 
@@ -61,7 +61,7 @@ async def handle_what_is_button(callback_query: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith("buy_"))
 async def handle_buy_callback(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-    package_amount = int(callback_query.data.split("_")[1])  # Corrected splitting
+    package_amount = int(callback_query.data.split("_")[1])
 
     selected_package = next(
         (p for p in POINTS_PRICES if p["amount"] == package_amount), None
@@ -69,7 +69,7 @@ async def handle_buy_callback(callback_query: types.CallbackQuery):
 
     if not selected_package:
         await bot.answer_callback_query(
-            callback_query.id, text="Произошла ошибка при покупке токенов!"
+            callback_query.id, text="⚠️ Произошла ошибка при покупке токенов! \n\n🆘 Обратитесь за помощью к разработчику: @jeixblehh"
         )
         return
 

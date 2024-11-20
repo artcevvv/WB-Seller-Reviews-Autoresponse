@@ -5,7 +5,6 @@ from components.database import *
 from components.bot_handlers.response_functions.reply import *
 from components.fetch import *
 
-
 @dp.callback_query_handler(lambda c: c.data == "reply")
 async def reply_command(callback_query: types.CallbackQuery):
     original_message_id = callback_query.message.message_id
@@ -44,9 +43,6 @@ async def reply_command(callback_query: types.CallbackQuery):
             await bot.send_message(
                 callback_query.from_user.id, "❌ Не удалось отправить ответ на отзыв."
             )
-
-
-
 
 @dp.callback_query_handler(lambda c: c.data == "skip")
 async def skip_command(callback_query: types.CallbackQuery):

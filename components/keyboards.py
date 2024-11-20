@@ -7,20 +7,17 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-
 def go_to_menu_keyboard():
     ReplyKeyboardRemove()
     next_button = InlineKeyboardButton("▶️ Перейти к меню", callback_data="next")
     keyboard = InlineKeyboardMarkup().add(next_button)
     return keyboard
 
-
 def contact_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     contact_button = KeyboardButton("📞 Отправить контакт", request_contact=True)
     keyboard.add(contact_button)
     return keyboard
-
 
 def create_menu_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=2)
@@ -42,20 +39,17 @@ def create_menu_keyboard():
     )
     return keyboard
 
-
 def next_keyboard():
     keyboard = InlineKeyboardMarkup()
     next_button = InlineKeyboardButton("▶️ Далее", callback_data="next_button")
     keyboard.add(next_button)
     return keyboard
 
-
 def prev_keyboard():
     keyboard = InlineKeyboardMarkup()
     prev_button = InlineKeyboardButton("◀️ Назад", callback_data="prev_button")
     keyboard.add(prev_button)
     return keyboard
-
 
 def review_answer_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=2)
@@ -64,20 +58,17 @@ def review_answer_keyboard():
     keyboard.add(reply_button, skip_button)
     return keyboard
 
-
 def tokens_kb_layout():
     keyboard = InlineKeyboardMarkup(row_width=2)
     buy_button = InlineKeyboardButton("🏪 Купить токены", callback_data="buy")
     keyboard.add(buy_button)
     return keyboard
 
-
 def go_to_menu_main():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     menu_button = KeyboardButton("/menu")
     keyboard.add(menu_button)
     return keyboard
-
 
 def info_kb_layout():
     keyboard = InlineKeyboardMarkup(row_width=1)
@@ -91,3 +82,20 @@ def info_kb_layout():
     prev_button = InlineKeyboardButton("◀️ Назад", callback_data="prev_button")
     keyboard.add(howto_button, what_is_tokens_button, how_to_use_button, prev_button)
     return keyboard
+
+def settings_kb():
+    keyboard = InlineKeyboardMarkup(row_width=2);
+    delete_token_button  = InlineKeyboardButton("🗑 Удалить API-токен", callback_data="delete_token")
+    delete_user_button = InlineKeyboardButton("🗑 Удалить аккаунт", callback_data="delete_account")
+    prev_button = InlineKeyboardButton("◀️ Назад", callback_data="prev_button")
+    
+    keyboard.add(delete_token_button, delete_user_button, prev_button)
+    return keyboard
+          
+def yesno_kb():
+    kb = InlineKeyboardMarkup(row_width=2)
+    yes_btn = InlineKeyboardButton("✅ Да", callback_data="confirm_btn")
+    no_btn = InlineKeyboardButton("❌ Нет", callback_data="prev_button")
+    
+    kb.add(no_btn, yes_btn)
+    return kb

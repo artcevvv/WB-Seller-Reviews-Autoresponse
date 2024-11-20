@@ -38,10 +38,8 @@ class ReviewResponse(Base):
     chatgpt_response = Column(String, nullable=False)
     response_sent = Column(DateTime, default=datetime.now)
 
-    # Relationship with User
     user = relationship("User", back_populates="responses")
 
-# Add this to the User model for the relationship
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -51,15 +49,14 @@ class User(Base):
     points = Column(Integer, default=10)
     review_ids = Column(ARRAY(String), nullable=True)
 
-    tokens = relationship("Token", back_populates="owner")
-    responses = relationship("ReviewResponse", back_populates="user")
-
-
+    tokens = relationship("Token", back_populates="owner", cascade="all, delete-orphan")
+    responses = relationship("ReviewResponse", back_populates="user", cascade="all, delete-orphan")
 
 class Token(Base):
     __tablename__ = "tokens"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    telegram_user_id = Column(BigInteger, unique=True, index=True)
     wb_token = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.now())
 

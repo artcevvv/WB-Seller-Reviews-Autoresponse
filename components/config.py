@@ -17,6 +17,9 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 active_users = set()
 sent_reviews_ids = set()
+
+# Чёрт его знает...
 message_to_review_map = {}
+
 # Хранение обработанных отзывов для каждого пользователя
 processed_reviews = {}

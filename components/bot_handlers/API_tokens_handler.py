@@ -32,7 +32,7 @@ async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext
             return
         else:
             await bot.edit_message_text(
-                text="Введите свой API-ключ продавца.\nДля отмены введите команду '/cancel'",
+                text="✒️ Введите свой API-ключ продавца.\nДля отмены введите команду '/cancel'",
                 chat_id=chat_id,
                 message_id=original_message_id,
                 reply_markup=None,
@@ -48,7 +48,6 @@ async def add_api_handler(callback_query: types.CallbackQuery, state: FSMContext
 @dp.message_handler(commands="cancel", state="*")
 async def cancel_command(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
-    print(current_state)  # Debug
 
     if current_state is None:
         await message.reply("❓ Нечего отменять.")
@@ -73,7 +72,7 @@ async def store_key(message: types.Message, state: FSMContext):
             .filter(User.telegram_user_id == telegram_user_id)
             .first()
         )
-        token = Token(user_id=user.id, wb_token=api_key)
+        token = Token(user_id=user.id, wb_token=api_key, telegram_user_id = telegram_user_id)
         session.add(token)
         session.commit()
 
