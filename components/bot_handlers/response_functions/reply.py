@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from components.bot import *
 from components.config import *
 
+WILDBERRIES_API_ENDPOINT = os.getenv("WILDBERRIES_API_ENDPOINT")
+
 async def send_reply_to_review(review_id, reply_text, token):
     headers = {
         "Authorization": token,

@@ -1,7 +1,6 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-
 import logging
 
 from components.database import *
@@ -12,7 +11,6 @@ from components.config import *
 from components.bot_components.options import *
 from components.bot_handlers.buy_tokens_handler import *
 from components.bot_handlers.contact_handler import *
-from components.bot_handlers.API_tokens_handler import *
 from components.bot_handlers.main_menu_handlers import *
 from components.bot_handlers.info_handlers import *
 from components.bot_handlers.respond_handlers import *

@@ -16,5 +16,3 @@ async def info_button_handler(callback_query: types.CallbackQuery):
         message_id=original_message_id,
         reply_markup=keyboard
     )
-    
-    
