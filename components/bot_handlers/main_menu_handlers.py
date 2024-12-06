@@ -7,8 +7,9 @@ from components.bot import *
 from components.keyboards import *
 from components.fetch import *
 
-from aiogram.contrib.fsm_storage.memory import StatesGroup, State
-
+from aiogram import types
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 class APIKeyForm(StatesGroup):
@@ -20,7 +21,7 @@ async def answer_command(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     kb_layout = review_answer_keyboard()
     try:
-        # logging.info(f"Handling callback query for user: {user_id}")
+        logging.info(f"Handling callback query for user: {user_id}")
         with SessionLocal() as session:
             user = session.query(User).filter(User.telegram_user_id == user_id).first()
 
@@ -30,7 +31,7 @@ async def answer_command(callback_query: types.CallbackQuery):
                     "❌ У вас недостаточно токенов для ответа. Пожалуйста, пополните баланс.",
                 )
                 return
-            elif not user or not user.token:
+            elif not user or not user.tokens:
                 logging.info(f"No user or tokens found for user ID: {user_id}")
                 await bot.send_message(
                     user_id,
