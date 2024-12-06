@@ -26,9 +26,11 @@ async def start_command(message: types.Message):
         user = session.query(User).filter(User.telegram_user_id == user_id).first()
 
         if user:
+            menu_layout = create_menu_keyboard()
             await message.reply(
-                "Для вызова главного меню введите или выберите команду '/menu'",
-                reply_markup = go_to_menu_main()
+                f"🎟 У вас осталось {user.points} токенов\n"
+                "⬇️ Выберите действие\n",
+                reply_markup=menu_layout,
             )
         else:
             contact_layout = contact_keyboard()
@@ -41,39 +43,6 @@ async def start_command(message: types.Message):
                 f"У тебя {user.points}",
                 reply_markup=contact_layout,
             )
-
-@dp.message_handler(commands=["menu"])
-async def menu_command(message: types.Message):
-    user_id = message.chat.id #Same thing as chat id tbf
-    with SessionLocal() as session:
-        user = session.query(User).filter(User.telegram_user_id == user_id).first()
-        
-        if user:
-            menu_layout = create_menu_keyboard()
-            await message.reply(
-                f"🎟 У вас осталось {user.points} токенов\n"
-                "⬇️ Выберите действие\n",
-                reply_markup=menu_layout,
-            )
-        else:
-            await message.reply(
-                "Вы не зарегистрированы! Введите команду '/start' для регистрации в сервисе!"
-            )
-
-
-@dp.callback_query_handler(lambda c: c.data == "next")
-async def next_command(callback_query: types.CallbackQuery):
-    original_message_id = callback_query.message.message_id
-    chat_id = callback_query.message.chat.id
-    keyboard = create_menu_keyboard()
-
-    await bot.answer_callback_query(callback_query.id)
-    await bot.edit_message_text(
-        text="⬇️ Выберите действие",
-        chat_id=chat_id,
-        message_id=original_message_id,
-        reply_markup=keyboard,
-    )
 
 @dp.callback_query_handler(lambda c: c.data == "prev_button")
 async def prev_button_handler(callback_query: types.CallbackQuery):

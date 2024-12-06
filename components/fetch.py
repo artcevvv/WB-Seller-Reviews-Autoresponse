@@ -26,17 +26,7 @@ async def fetch_reviews(user_id, kb_layout):
         try:
             with SessionLocal() as session:
                 user = session.query(User).filter(User.telegram_user_id == user_id).first()
-                menu_layout = go_to_menu_keyboard()
-
-                if not user or not user.tokens:
-                    logging.info(f"No user or tokens found for user ID: {user_id}")
-                    await bot.send_message(
-                        user_id,
-                        "❌ Необходимо добавить хотя бы один API токен!",
-                        parse_mode=ParseMode.HTML
-                    )
-                    return
-
+                
                 # Retrieve processed review IDs from the user model
                 processed_reviews_set.update(user.review_ids or [])
 
@@ -86,13 +76,6 @@ async def fetch_reviews(user_id, kb_layout):
                                     chatgpt_response = await get_chatgpt_response(
                                         review_supplier, review_item, review_rating, review_text
                                     )
-
-                                    if user.points <= 0:
-                                        await bot.send_message(
-                                            user_id,
-                                            "❌ У вас недостаточно токенов для ответа. Пожалуйста, пополните баланс."
-                                        )
-                                        return
 
                                     # Отправка сообщения и сохранение его ID
                                     sent_message = await bot.send_message(

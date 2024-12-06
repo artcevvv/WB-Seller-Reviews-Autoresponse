@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 POSTGRES_SQL_PASS = os.getenv("POSTGRES_SQL_PASS")
+POSTGRES_SQL_DBNAME = os.getenv("POSTGRES_SQL_DBNAME")
 
 POSTGRES_SQL_URL = URL.create(
     "postgresql",
@@ -14,7 +15,7 @@ POSTGRES_SQL_URL = URL.create(
     password=POSTGRES_SQL_PASS,
     host="localhost",
     port=5432,
-    database="postgres",
+    database=POSTGRES_SQL_DBNAME,
 )
 
 engine = create_engine(POSTGRES_SQL_URL)

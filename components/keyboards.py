@@ -39,12 +39,6 @@ def create_menu_keyboard():
     )
     return keyboard
 
-def next_keyboard():
-    keyboard = InlineKeyboardMarkup()
-    next_button = InlineKeyboardButton("▶️ Далее", callback_data="next_button")
-    keyboard.add(next_button)
-    return keyboard
-
 def prev_keyboard():
     keyboard = InlineKeyboardMarkup()
     prev_button = InlineKeyboardButton("◀️ Назад", callback_data="prev_button")

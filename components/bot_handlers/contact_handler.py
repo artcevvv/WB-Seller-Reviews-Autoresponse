@@ -22,7 +22,6 @@ async def contact_handler(message: types.Message):
             user.phone_number = contact.phone_number
             session.commit()
             await message.reply(
-                "✅ Спасибо! Ваш номер телефона сохранен.",
+                "✅ Спасибо! Ваш номер телефона сохранен.\nВведите /start для начала работы.",
                 reply_markup=ReplyKeyboardRemove(),
             )
-            await message.answer("⬇️ Выберите действие:", reply_markup=keyboard)
