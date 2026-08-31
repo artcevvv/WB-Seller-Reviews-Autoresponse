@@ -6,15 +6,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-POSTGRES_SQL_PASS = os.getenv("POSTGRES_SQL_PASS")
-POSTGRES_SQL_DBNAME = os.getenv("POSTGRES_SQL_DBNAME")
+POSTGRES_SQL_USER = os.getenv("POSTGRES_SQL_USER", "postgres")
+POSTGRES_SQL_PASS = os.getenv("POSTGRES_SQL_PASS", "")
+POSTGRES_SQL_HOST = os.getenv("POSTGRES_SQL_HOST", "localhost")
+POSTGRES_SQL_PORT = int(os.getenv("POSTGRES_SQL_PORT", "5432"))
+POSTGRES_SQL_DBNAME = os.getenv("POSTGRES_SQL_DBNAME", "wb_bot_db")
 
 POSTGRES_SQL_URL = URL.create(
     "postgresql",
-    username="postgres",
+    username=POSTGRES_SQL_USER,
     password=POSTGRES_SQL_PASS,
-    host="localhost",
-    port=5432,
+    host=POSTGRES_SQL_HOST,
+    port=POSTGRES_SQL_PORT,
     database=POSTGRES_SQL_DBNAME,
 )
 

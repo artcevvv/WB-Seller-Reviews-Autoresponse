@@ -74,19 +74,19 @@ flowchart TD
 
 ## Key Features
 
-- 🤖 **Context-Aware GPT-4o Responses**:
+- **Context-aware GPT-4o responses**:
   - Dynamically synthesizes personalized responses according to product title, seller brand name, star rating (1–5), and customer remarks.
   - Differentiates communication strategy: expresses gratitude for praise and offers polite empathy, resolution suggestions, and support for complaints.
-- 🏬 **Multi-Account & Multi-Token Store Management**:
+- **Multi-account and multi-token store management**:
   - Store owners can bind multiple Wildberries seller tokens (1:N relationship) under a single Telegram account.
   - Token management interface with validation, view, and safe deletion.
-- ⚡ **Asynchronous Non-Blocking Worker**:
+- **Asynchronous worker**:
   - Background polling worker (`asyncio.create_task`) ingests unprocessed reviews asynchronously without blocking bot interactions.
   - In-memory and database deduplication preventing repeated processing of previously handled reviews.
-- 💳 **Token & Monetization System**:
+- **Token and monetization system**:
   - Native integration with **Telegram In-App Payments API** (`send_invoice`, `pre_checkout_query`).
   - Credit package tiers with configurable pricing and automatic balance updates upon successful checkout.
-- 🔒 **Security & FSM Guardrails**:
+- **Security and FSM guardrails**:
   - State machine (`FSMContext`) for secure onboarding of Wildberries API tokens with length and format validation.
   - Automatic deletion of messages containing raw API keys to protect sensitive credentials from chat history leaks.
   - User verification via native Telegram contact sharing.
@@ -172,6 +172,8 @@ wb_seller_reviews_autoresp/
 │           └── reply.py             # Wildberries REST API client (PATCH review response)
 ├── .env.example                # Template for environment configuration
 ├── .gitignore                  # Git ignore rules for environments and bytecode
+├── docker-compose.yml          # Multi-container orchestration (Bot + PostgreSQL)
+├── Dockerfile                  # Container definition for the Python bot service
 ├── main.py                     # Entry point (initiates polling via aiogram executor)
 ├── requirements.txt            # Pinned project dependencies
 └── README.md                   # Project documentation
@@ -181,20 +183,47 @@ wb_seller_reviews_autoresp/
 
 ## Quick Start Guide
 
-### 1. Prerequisites
+### Option A: Run with Docker Compose (Recommended)
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/artcevvv/wb_seller_reviews_autoresp.git
+   cd wb_seller_reviews_autoresp
+   ```
+
+2. **Configure environment variables**:
+   ```bash
+   cp .env.example .env
+   ```
+   *Fill in `TELEGRAM_BOT_TOKEN`, `GPT_API_TOKEN`, and `TRANZZO_TEST_PAYMENT` in `.env`.*
+
+3. **Launch containers**:
+   ```bash
+   docker compose up --build -d
+   ```
+   *This starts both the PostgreSQL database (with automated healthchecks and volume persistence) and the Telegram Bot container.*
+
+4. **View logs**:
+   ```bash
+   docker compose logs -f bot
+   ```
+
+---
+
+### Option B: Local Manual Setup
+
+#### 1. Prerequisites
 - **Python 3.10** or higher installed.
 - **PostgreSQL** instance running locally or hosted on a cloud provider.
 - Telegram Bot token obtained from [@BotFather](https://t.me/BotFather).
 - OpenAI API Key with access to `gpt-4o`.
 - Wildberries Seller account with access to the **Feedbacks & Questions API token**.
 
----
-
-### 2. Clone and Setup Environment
+#### 2. Clone and Setup Environment
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/wb_seller_reviews_autoresp.git
+git clone https://github.com/artcevvv/wb_seller_reviews_autoresp.git
 cd wb_seller_reviews_autoresp
 
 # Create virtual environment
@@ -205,9 +234,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
----
-
-### 3. Environment Configuration
+#### 3. Environment Configuration
 
 Copy `.env.example` to `.env` and fill in your credentials:
 
@@ -228,6 +255,9 @@ GPT_API_TOKEN=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx
 WILDBERRIES_API_ENDPOINT=https://feedbacks-api.wildberries.ru/api/v1/feedbacks
 
 # PostgreSQL Database
+POSTGRES_SQL_HOST=localhost
+POSTGRES_SQL_PORT=5432
+POSTGRES_SQL_USER=postgres
 POSTGRES_SQL_DBNAME=wb_bot_db
 POSTGRES_SQL_PASS=your_secure_postgres_password
 
@@ -235,9 +265,7 @@ POSTGRES_SQL_PASS=your_secure_postgres_password
 TRANZZO_TEST_PAYMENT=284685063:TEST:xxxxxxxxxx
 ```
 
----
-
-### 4. Database Initialization
+#### 4. Database Initialization
 
 Ensure your PostgreSQL database is created:
 
@@ -247,9 +275,7 @@ CREATE DATABASE wb_bot_db;
 
 The tables (`users`, `tokens`, `review_responses`) will be automatically created on startup via `Base.metadata.create_all(bind=engine)` in [`components/database.py`](components/database.py).
 
----
-
-### 5. Run the Application
+#### 5. Run the Application
 
 ```bash
 python main.py
@@ -287,7 +313,7 @@ messages = [
 
 ## Roadmap & Engineering Enhancements
 
-- [ ] **Docker & Docker Compose**: Containerize PostgreSQL, Telegram Bot worker, and Redis in a multi-container stack.
+- [x] **Docker & Docker Compose**: Containerize PostgreSQL, Telegram Bot worker, and multi-container orchestration.
 - [ ] **Migrate to aiogram 3.x**: Upgrade to the latest version with modern routers, filters, and async primitives.
 - [ ] **Task Queue (Celery / ARQ + Redis)**: Decouple review fetching into distributed worker tasks with exponential backoff and rate-limiting.
 - [ ] **Custom Store Persona & Tone Config**: Allow sellers to configure custom greeting styles, brand signatures, and promotion links.
@@ -297,10 +323,9 @@ messages = [
 
 ## Author & Contact
 
-Developed by **Artcev**  
-- **Telegram**: [@jeixblehh](https://t.me/jeixblehh)  
+Developed by **artcevvv**  
 - **GitHub**: [github.com/artcevvv](https://github.com/artcevvv)  
-
+- **Contact**: [artcevvv.com](https://artcevvv.com)
 ---
 
 ## License

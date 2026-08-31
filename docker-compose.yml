@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: wb_bot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_SQL_DBNAME:-wb_bot_db}
+      POSTGRES_USER: ${POSTGRES_SQL_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SQL_PASS:-postgres}
+    ports:
+      - "${POSTGRES_SQL_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SQL_USER:-postgres} -d ${POSTGRES_SQL_DBNAME:-wb_bot_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wb_bot_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SQL_HOST=db
+      - POSTGRES_SQL_PORT=5432
+      - POSTGRES_SQL_USER=${POSTGRES_SQL_USER:-postgres}
+      - POSTGRES_SQL_PASS=${POSTGRES_SQL_PASS:-postgres}
+      - POSTGRES_SQL_DBNAME=${POSTGRES_SQL_DBNAME:-wb_bot_db}
+
+volumes:
+  postgres_data:
+    driver: local
