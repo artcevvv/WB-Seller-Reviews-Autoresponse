@@ -1,4 +1,38 @@
-.env 
+# Environment variables
+.env
+
+# Virtual environment
 /venv
-__pycache__
-/*/*/*/__pycache__
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Compiled Python files
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / build files
+dist/
+build/
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Large data / media (if any)
+# data/large/
+# media/
+
+# Specific to this project (if any)
+/tests/pytest_cache
